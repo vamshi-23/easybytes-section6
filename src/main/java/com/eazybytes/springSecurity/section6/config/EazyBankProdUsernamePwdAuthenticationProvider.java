@@ -12,10 +12,10 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
-@Profile("!prod")
 @Component
 @RequiredArgsConstructor
-public class EazyBankUsernamePwdAuthenticationProvider implements AuthenticationProvider {
+@Profile("prod")
+public class EazyBankProdUsernamePwdAuthenticationProvider implements AuthenticationProvider {
 
     private final UserDetailsService userDetailsService;
     private final PasswordEncoder passwordEncoder;
@@ -27,9 +27,15 @@ public class EazyBankUsernamePwdAuthenticationProvider implements Authentication
         String password = authentication.getCredentials().toString();
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-        return new UsernamePasswordAuthenticationToken(username, password, userDetails.getAuthorities());
-}
-        @Override
+        if (passwordEncoder.matches(password, userDetails.getPassword())){
+            //Fetch Age detils and perform validation to check if age is >18
+            return new UsernamePasswordAuthenticationToken(username, password, userDetails.getAuthorities());
+        }else {
+            throw new BadCredentialsException("Invalid Credentials");
+        }
+    }
+
+    @Override
     public boolean supports(Class<?> authentication) {
         return (UsernamePasswordAuthenticationToken.class.isAssignableFrom(authentication));
     }
